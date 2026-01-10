@@ -23,6 +23,16 @@ export const auth = betterAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string
     }
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['google', 'github', 'apple']
+    }
+  },
+  rateLimit: {
+    window: 60, // 60 seconds
+    max: 10 // 10 requests per window
+  },
   session: {
     cookieCache: {
       enabled: true,

@@ -4,9 +4,11 @@ import Image from 'next/image'
 import { eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/db/db'
-import { account } from '@/db/schemas/auth'
+import { account, session as sessionTable } from '@/db/schemas/auth'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Sessions } from '@/components/sessions'
+import { SignOutButton } from '@/components/sign-out-button'
 
 const providerNames: Record<string, string> = {
   google: 'Google',
@@ -34,11 +36,26 @@ export default async function DashboardPage() {
     .from(account)
     .where(eq(account.userId, user.id))
 
+  // Get user's sessions
+  const sessions = await db
+    .select({
+      id: sessionTable.id,
+      createdAt: sessionTable.createdAt,
+      expiresAt: sessionTable.expiresAt,
+      userAgent: sessionTable.userAgent,
+      ipAddress: sessionTable.ipAddress,
+    })
+    .from(sessionTable)
+    .where(eq(sessionTable.userId, user.id))
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-6">
-      <div className="mb-6">
-        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-xs">Manage your account</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-xs">Manage your account</p>
+        </div>
+        <SignOutButton variant="outline" size="xs" />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -123,25 +140,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Session Card */}
-        <Card className="sm:col-span-2 lg:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Current Session</CardTitle>
-            <CardDescription>Active login session</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-              <div>
-                <span className="text-muted-foreground">Session ID: </span>
-                <span className="font-mono text-[10px]">{session.session.id.slice(0, 12)}...</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Expires: </span>
-                <span>{new Date(session.session.expiresAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Sessions Card */}
+        <Sessions sessions={sessions} currentSessionId={session.session.id} />
       </div>
     </main>
   )
