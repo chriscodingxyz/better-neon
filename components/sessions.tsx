@@ -2,8 +2,6 @@
 
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from '@/components/ui/sonner'
 import { authClient } from '@/lib/auth-client'
@@ -21,70 +19,48 @@ interface SessionsProps {
   currentSessionId: string
 }
 
-export function Sessions({ sessions: initialSessions, currentSessionId }: SessionsProps) {
-  const [sessions, setSessions] = React.useState(initialSessions)
-  const [revokingId, setRevokingId] = React.useState<string | null>(null)
+export function Sessions({ sessions: initialSessions }: SessionsProps) {
+  const [sessionCount, setSessionCount] = React.useState(initialSessions.length)
+  const [isRevoking, setIsRevoking] = React.useState(false)
 
-  async function revokeSession(sessionId: string) {
-    setRevokingId(sessionId)
+  const otherSessionCount = sessionCount - 1
+
+  async function revokeOtherSessions() {
+    setIsRevoking(true)
     try {
-      await authClient.revokeSession({ id: sessionId })
-      setSessions(sessions.filter(s => s.id !== sessionId))
-      toast.success('Session revoked')
+      await authClient.revokeOtherSessions()
+      setSessionCount(1)
+      toast.success('All other sessions have been signed out')
     } catch {
-      toast.error('Failed to revoke session')
+      toast.error('Failed to sign out other sessions')
     } finally {
-      setRevokingId(null)
+      setIsRevoking(false)
     }
   }
 
-  function parseUserAgent(ua: string | null): string {
-    if (!ua) return 'Unknown device'
-    if (ua.includes('Chrome')) return 'Chrome'
-    if (ua.includes('Firefox')) return 'Firefox'
-    if (ua.includes('Safari')) return 'Safari'
-    if (ua.includes('Edge')) return 'Edge'
-    return 'Browser'
-  }
-
   return (
-    <Card className="sm:col-span-2 lg:col-span-3">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Active Sessions</CardTitle>
-        <CardDescription>{sessions.length} session{sessions.length !== 1 ? 's' : ''}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {sessions.map((session) => (
-          <div
-            key={session.id}
-            className="flex items-center justify-between rounded-md border border-border p-2"
-          >
-            <div className="flex items-center gap-3 text-xs">
-              <div>
-                <p className="font-medium">
-                  {parseUserAgent(session.userAgent)}
-                  {session.id === currentSessionId && (
-                    <Badge variant="secondary" className="ml-2 text-[10px]">Current</Badge>
-                  )}
-                </p>
-                <p className="text-muted-foreground">
-                  {session.ipAddress || 'Unknown IP'} · Expires {new Date(session.expiresAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            {session.id !== currentSessionId && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={() => revokeSession(session.id)}
-                disabled={revokingId === session.id}
-              >
-                {revokingId === session.id ? <Spinner size="xs" /> : 'Revoke'}
-              </Button>
-            )}
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <div className="glass-card flex items-center justify-between rounded-xl border p-4">
+      <div className="text-xs">
+        <p className="font-medium">
+          {sessionCount} active session{sessionCount !== 1 ? 's' : ''}
+        </p>
+        {otherSessionCount > 0 && (
+          <p className="text-muted-foreground">
+            {otherSessionCount} other device{otherSessionCount !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+      {otherSessionCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs text-muted-foreground hover:text-destructive"
+          onClick={revokeOtherSessions}
+          disabled={isRevoking}
+        >
+          {isRevoking ? <Spinner size="xs" /> : 'Sign out other devices'}
+        </Button>
+      )}
+    </div>
   )
 }

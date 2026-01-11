@@ -6,7 +6,6 @@ import { auth } from '@/lib/auth'
 import { db } from '@/db/db'
 import { account, session as sessionTable } from '@/db/schemas/auth'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sessions } from '@/components/sessions'
 import { SignOutButton } from '@/components/sign-out-button'
 
@@ -49,100 +48,77 @@ export default async function DashboardPage() {
     .where(eq(sessionTable.userId, user.id))
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-6">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-xs">Manage your account</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+        <SignOutButton variant="outline" size="sm" />
+      </div>
+
+      {/* Profile + Details Row */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="glass-card flex items-center gap-3 rounded-xl border p-4">
+          {user.image ? (
+            <Image
+              src={user.image}
+              alt={user.name || 'Avatar'}
+              width={44}
+              height={44}
+              className="size-11 rounded-full ring-2 ring-border/50"
+            />
+          ) : (
+            <div className="bg-muted text-muted-foreground flex size-11 items-center justify-center rounded-full text-sm font-medium ring-2 ring-border/50">
+              {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{user.name || 'No name'}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          </div>
+          <Badge variant={user.emailVerified ? 'secondary' : 'outline'} className="text-[10px] shrink-0">
+            {user.emailVerified ? 'Verified' : 'Unverified'}
+          </Badge>
         </div>
-        <SignOutButton variant="outline" size="xs" />
+
+        <div className="glass-card rounded-xl border p-4 text-xs space-y-2.5">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">User ID</span>
+            <span className="font-mono text-[10px] truncate max-w-[120px]">{user.id}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Member since</span>
+            <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Profile Card */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Profile</CardTitle>
-            <CardDescription>Your account</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center gap-3">
-            {user.image ? (
-              <Image
-                src={user.image}
-                alt={user.name || 'Avatar'}
-                width={32}
-                height={32}
-                className="size-8 rounded-full"
-              />
-            ) : (
-              <div className="bg-muted text-muted-foreground flex size-8 items-center justify-center rounded-full text-xs font-medium">
-                {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
+      {/* Linked Accounts - Compact */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Linked Accounts</h2>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {['google', 'github', 'apple'].map((provider) => {
+            const acc = linkedAccounts.find(a => a.providerId === provider)
+            return (
+              <div
+                key={provider}
+                className="glass-card flex items-center justify-between rounded-xl border p-3 transition-colors duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <Image src={`/icons/${provider === 'github' ? 'github_light' : provider}.svg`} alt="" width={16} height={16} className="opacity-80" />
+                  <span className="text-xs font-medium">{providerNames[provider]}</span>
+                </div>
+                <div className={`size-2 rounded-full ${acc ? 'bg-green-500' : 'bg-neutral-300'}`} />
               </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{user.name || 'No name'}</p>
-              <p className="text-muted-foreground truncate text-xs">{user.email}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Linked Accounts Card */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Linked Accounts</CardTitle>
-            <CardDescription>{linkedAccounts.length} connected</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {linkedAccounts.length > 0 ? (
-              linkedAccounts.map((acc) => (
-                <div key={acc.providerId} className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{providerNames[acc.providerId] || acc.providerId}</span>
-                  <Badge variant="secondary" className="text-[10px]">Connected</Badge>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-xs">No linked accounts</p>
-            )}
-            {/* Show unlinked providers */}
-            {['google', 'github', 'apple']
-              .filter(p => !linkedAccounts.some(a => a.providerId === p))
-              .map((provider) => (
-                <div key={provider} className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{providerNames[provider]}</span>
-                  <Badge variant="outline" className="text-[10px]">Not linked</Badge>
-                </div>
-              ))
-            }
-          </CardContent>
-        </Card>
-
-        {/* Account Info Card */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Account Info</CardTitle>
-            <CardDescription>Details</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">User ID</span>
-              <span className="font-mono text-[10px]">{user.id.slice(0, 8)}...</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Email verified</span>
-              <Badge variant={user.emailVerified ? 'secondary' : 'outline'} className="text-[10px]">
-                {user.emailVerified ? 'Yes' : 'No'}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Created</span>
-              <span>{new Date(user.createdAt).toLocaleDateString()}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sessions Card */}
+            )
+          })}
+        </div>
+      </section>
+        
+      {/* Sessions - Compact */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sessions</h2>
         <Sessions sessions={sessions} currentSessionId={session.session.id} />
-      </div>
-    </main>
+      </section>
+
+    </div>
   )
 }
