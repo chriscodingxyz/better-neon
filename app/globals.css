@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -89,7 +89,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0.00 0);
+  --primary: oklch(0.87 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -134,7 +134,7 @@
   /* Tablet */
   @media (min-width: 640px) {
     body {
-      background-size: auto 450px;
+      background-size: auto 350px;
       background-position: 100% 100%;
     }
   }
@@ -142,7 +142,7 @@
   /* Desktop - fixed size, max 700px */
   @media (min-width: 1024px) {
     body {
-      background-size: auto 600px;
+      background-size: auto 500px;
       background-position: right bottom;
     }
   }
@@ -150,7 +150,7 @@
   /* Large desktop - cap at 750px max */
   @media (min-width: 1280px) {
     body {
-      background-size: auto 700px;
+      background-size: auto 550px;
       background-position: right bottom;
     }
   }
@@ -158,7 +158,7 @@
   /* Extra large desktop - same max size */
   @media (min-width: 1536px) {
     body {
-      background-size: auto 750px;
+      background-size: auto 600px;
       background-position: right bottom;
     }
   }
